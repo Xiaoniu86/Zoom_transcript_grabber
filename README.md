@@ -137,18 +137,3 @@ A: Yes. The output file is UTF-8 encoded and supports any language Zoom transcri
 
 **Q: Where is Terminal on Mac?**
 A: Press `Cmd + Space`, type "Terminal", and press Enter.
-
----
-
-## Contributing
-
-PRs and issues welcome, especially for:
-- Testing across different Zoom versions
-- Improving Windows reliability
-- Support for other meeting platforms (Teams, Google Meet)
-
----
-
-## License
-
-MIT — free to use, modify, and distribute.
