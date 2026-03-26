@@ -44,7 +44,7 @@ No extra permissions needed on Windows.
 
 Make sure:
 1. A Zoom meeting is in progress
-2. The Transcript panel is open: click **CC / Captions** at the bottom toolbar → **View Full Transcript**
+2. The Transcript panel is open: click **Transcript** at the bottom toolbar → **View Full Transcript**
 
 ---
 
@@ -58,8 +58,8 @@ zoom_transcript_20260326_143022.txt
 
 Sample output:
 ```
-[Xiao Niu] Let's go over today's agenda...
-[KaranKalra] Sounds good. I have three things to cover.
+[Atendee A] Let's go over today's agenda...
+[Atendee B] Sounds good. I have three things to cover.
 This approach needs more discussion before we finalize.
 ```
 
