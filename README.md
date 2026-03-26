@@ -31,7 +31,7 @@ This tool fixes that. As long as you're in an active meeting with the Transcript
 ### Before you run
 
 1. A Zoom meeting must be in progress
-2. The Transcript panel must be open: click **CC / Captions** at the bottom toolbar → **View Full Transcript**
+2. The Transcript panel must be open: click **Transcript / Captions** at the bottom toolbar → **View Full Transcript**
 3. Keep both the meeting and the Transcript panel open while the script runs — do not close them
 
 ### Mac
