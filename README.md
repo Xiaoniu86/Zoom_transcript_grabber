@@ -39,7 +39,7 @@ This tool fixes that. As long as you're in an active meeting with the Transcript
 Open **Terminal** (`Cmd + Space` → type "Terminal") and paste:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Xiaoniu86/zoom-transcript-grabber/main/mac/grab.sh | bash
+curl -sSL https://raw.githubusercontent.com/Xiaoniu86/Zoom_transcript_grabber/main/mac/grab.sh | bash
 ```
 
 The first time you run it, you'll need to grant Terminal the Accessibility permission. The script will detect this and walk you through it automatically.
