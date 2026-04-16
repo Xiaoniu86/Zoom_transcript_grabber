@@ -3,7 +3,6 @@
 # ============================================================
 # Zoom Transcript Grabber - Mac
 # Uses macOS Accessibility API (read-only, system built-in)
-# Fast mode: uses Swift directly; falls back to AppleScript
 # ============================================================
 
 BOLD='\033[1m'
@@ -69,108 +68,34 @@ fi
 echo -e "${GREEN}✅ Permission OK${RESET}"
 echo ""
 
-# ── Step 4: Grab text ─────────────────────────────────────────
+# ── Step 4: Grab text (single batch call — fastest possible) ──
 echo -e "${YELLOW}📋 Reading transcript...${RESET}"
 
 OUTPUT_FILE="$HOME/Desktop/zoom_transcript_$(date +%Y%m%d_%H%M%S).txt"
 
-# Fast path: Swift calls Accessibility API directly (no AppleScript overhead)
-RESULT=$(swift - 2>/dev/null << 'SWIFT'
-import Cocoa
-import ApplicationServices
-
-let apps = NSWorkspace.shared.runningApplications
-guard let zoom = apps.first(where: { $0.bundleIdentifier == "us.zoom.xos" }) else {
-    print("ERROR: Zoom not running"); exit(0)
-}
-
-let app = AXUIElementCreateApplication(zoom.processIdentifier)
-var windowsRef: CFTypeRef?
-AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &windowsRef)
-guard let windows = windowsRef as? [AXUIElement] else { print("ERROR: no windows"); exit(0) }
-
-var transcriptWin: AXUIElement?
-for win in windows {
-    var t: CFTypeRef?
-    AXUIElementCopyAttributeValue(win, kAXTitleAttribute as CFString, &t)
-    if let title = t as? String, title.contains("Transcript") { transcriptWin = win; break }
-}
-guard let win = transcriptWin else { print("ERROR: no transcript window"); exit(0) }
-
-var output = ""
-
-func collect(_ el: AXUIElement, _ depth: Int) {
-    guard depth < 12 else { return }
-    var roleRef: CFTypeRef?
-    AXUIElementCopyAttributeValue(el, kAXRoleAttribute as CFString, &roleRef)
-    let role = roleRef as? String ?? ""
-    var valRef: CFTypeRef?
-    AXUIElementCopyAttributeValue(el, kAXValueAttribute as CFString, &valRef)
-    if role == "AXStaticText" || role == "AXTextArea" {
-        if let text = valRef as? String {
-            let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !t.isEmpty {
-                output += (role == "AXStaticText" ? "[\(t)]" : t) + "\n"
-            }
-        }
-        return
-    }
-    var childRef: CFTypeRef?
-    AXUIElementCopyAttributeValue(el, kAXChildrenAttribute as CFString, &childRef)
-    if let children = childRef as? [AXUIElement] {
-        for child in children { collect(child, depth + 1) }
-    }
-}
-
-collect(win, 0)
-print(output)
-SWIFT
-)
-
-# Fallback: AppleScript if Swift failed
-if [ -z "$RESULT" ] || echo "$RESULT" | grep -q "^ERROR"; then
-    echo -e "${YELLOW}  (using fallback method...)${RESET}"
-    RESULT=$(osascript << 'APPLESCRIPT'
+RESULT=$(osascript << 'APPLESCRIPT'
 tell application "System Events"
     tell process "zoom.us"
-        set transcriptWindow to missing value
-        repeat with w in every window
-            if name of w contains "Transcript" then
-                set transcriptWindow to w
-                exit repeat
-            end if
-        end repeat
-        if transcriptWindow is missing value then return "ERROR: no transcript window"
-        set theTable to table 1 of scroll area 1 of transcriptWindow
-        set output to ""
-        set rowCount to count of rows of theTable
-        set currentSpeaker to ""
-        repeat with i from 1 to rowCount
-            set el to UI element 1 of row i of theTable
-            try
-                set spkr to value of static text 1 of el
-                if spkr is not missing value and spkr is not "" then set currentSpeaker to spkr
-            end try
-            repeat with ta in every text area of el
-                try
-                    set txt to value of ta
-                    if txt is not missing value and txt as string is not "" then
-                        if currentSpeaker is not "" then
-                            set output to output & "[" & currentSpeaker & "] " & (txt as string) & linefeed
-                            set currentSpeaker to ""
-                        else
-                            set output to output & (txt as string) & linefeed
-                        end if
-                    end if
-                end try
-            end repeat
-        end repeat
-        return output
+        set theTable to table 1 of scroll area 1 of window "Transcript"
+        -- One single call: fetch all text areas from all rows at once
+        set allText to value of every text area of every UI element of every row of theTable
     end tell
 end tell
+
+-- Flatten and assemble output
+set output to ""
+repeat with rowTexts in allText
+    repeat with cellTexts in rowTexts
+        repeat with t in cellTexts
+            if t is not missing value and t as string is not "" then
+                set output to output & (t as string) & linefeed
+            end if
+        end repeat
+    end repeat
+end repeat
+return output
 APPLESCRIPT
 )
-fi
 
 # ── Step 5: Save ──────────────────────────────────────────────
 if [ -z "$RESULT" ] || echo "$RESULT" | grep -q "^ERROR"; then
